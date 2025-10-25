@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <!-- Header -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="32dp">
+
+            <ImageButton
+                android:id="@+id/back_btn"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@android:drawable/ic_menu_revert"
+                android:contentDescription="Back"
+                android:scaleType="centerInside"
+                android:background="@drawable/edit_text_background" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Xác thực OTP"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:textColor="@color/black"
+                android:gravity="center" />
+
+            <View
+                android:layout_width="40dp"
+                android:layout_height="40dp" />
+        </LinearLayout>
+
+        <!-- Logo -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="📧"
+            android:textSize="48sp"
+            android:layout_gravity="center"
+            android:layout_marginBottom="24dp" />
+
+        <!-- Title -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Nhập mã xác thực"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@color/black"
+            android:layout_marginBottom="8dp" />
+
+        <!-- Email Display -->
+        <TextView
+            android:id="@+id/email_display"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Mã xác thực đã gửi tới:\nemail@example.com"
+            android:textSize="13sp"
+            android:textColor="@color/darker_gray"
+            android:layout_marginBottom="24dp"
+            android:lineSpacingExtra="4dp" />
+
+        <!-- Timer -->
+        <TextView
+            android:id="@+id/timer_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="⏱️ Hết hạn trong: 10:00"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="@color/orange_dark"
+            android:layout_gravity="center"
+            android:layout_marginBottom="24dp" />
+
+        <!-- OTP Input -->
+        <EditText
+            android:id="@+id/otp_input"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:hint="Nhập 6 chữ số"
+            android:inputType="number"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:background="@drawable/edit_text_background"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textAlignment="center"
+            android:layout_marginBottom="24dp" />
+
+        <!-- Verify Button -->
+        <Button
+            android:id="@+id/verify_btn"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="Xác thực"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@color/white"
+            android:background="@color/pizza_red"
+            android:layout_marginBottom="12dp" />
+
+        <!-- Resend Button -->
+        <Button
+            android:id="@+id/resend_btn"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="Gửi lại mã"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@color/pizza_red"
+            android:background="@color/light_gray"
+            android:enabled="false" />
+
+        <!-- Info Box -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:background="@drawable/edit_text_background"
+            android:layout_marginTop="32dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="ℹ️ Lưu ý"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="@color/blue_info"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="• Mã OTP gồm 6 chữ số\n• Mã có hiệu lực trong 10 phút\n• Không chia sẻ mã với ai khác"
+                android:textSize="12sp"
+                android:textColor="@color/darker_gray"
+                android:lineSpacingExtra="4dp" />
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>

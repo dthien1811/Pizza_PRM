@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Primary Colors -->
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    
+    <!-- Brand Colors -->
+    <color name="pizza_red">#FFFF6B6B</color>
+    <color name="pizza_red_dark">#FFEE5a4a</color>
+    <color name="pizza_orange">#FFFFA500</color>
+    
+    <!-- Neutral Colors -->
+    <color name="light_gray">#FFF5F5F5</color>
+    <color name="gray">#FFCCCCCC</color>
+    <color name="darker_gray">#FF808080</color>
+    <color name="text_color">#FF333333</color>
+    
+    <!-- Status Colors -->
+    <color name="green_success">#FF4CAF50</color>
+    <color name="green_dark">#FF388E3C</color>
+    <color name="blue_info">#FF2196F3</color>
+    <color name="blue_dark">#FF1565C0</color>
+    <color name="red_error">#FFF44336</color>
+    <color name="red_dark">#FFC62828</color>
+    <color name="yellow_warning">#FFFFC107</color>
+    <color name="orange_dark">#FFFF9800</color>
+</resources>
