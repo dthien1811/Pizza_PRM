@@ -162,7 +162,7 @@ public class LoginActivity extends AppCompatActivity {
      * Navigate to main activity
      */
     private void navigateToMain() {
-        Intent intent = new Intent(LoginActivity.this, ProfileActivity.class);
+        Intent intent = new Intent(LoginActivity.this, ProductListActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
         finish();

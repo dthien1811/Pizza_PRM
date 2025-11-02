@@ -23,6 +23,7 @@
         <activity
             android:name=".activities.LoginActivity"
             android:exported="true"
+            android:label="Đăng nhập"
             android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -34,12 +35,14 @@
         <activity
             android:name=".activities.RegisterActivity"
             android:exported="false"
+            android:label="Đăng ký"
             android:screenOrientation="portrait" />
 
         <!-- ProfileActivity - Màn hình thông tin cá nhân -->
         <activity
             android:name=".activities.ProfileActivity"
             android:exported="false"
+            android:label="Hồ sơ"
             android:screenOrientation="portrait" />
 
         <!-- ForgotPasswordActivity - Màn hình quên mật khẩu -->
@@ -64,7 +67,21 @@
         <activity
             android:name=".MainActivity"
             android:exported="false"
+            android:label="Pizza Shop"
+            android:launchMode="singleTop"
             android:screenOrientation="portrait" />
+
+        <activity android:name=".activities.ProductListActivity"
+            android:exported="false"
+            android:label="Danh sách Pizza"
+            android:screenOrientation="portrait"/>
+
+        <activity android:name=".activities.ProductDetailActivity"
+            android:exported="false"
+            android:label="Chi tiết Pizza"
+            android:parentActivityName=".activities.ProductListActivity"
+            android:screenOrientation="portrait"/>
+
     </application>
 
 </manifest>

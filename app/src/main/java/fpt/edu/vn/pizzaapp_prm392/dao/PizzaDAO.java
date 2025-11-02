@@ -4,6 +4,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -359,5 +360,125 @@ public class PizzaDAO {
         pizza.setRating(cursor.getDouble(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PIZZA_RATING)));
         pizza.setStock(cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PIZZA_STOCK)));
         return pizza;
+    }
+
+    // ----------------------------------- -------------------------------------------
+
+    public List<String> getAllCategories() {
+        db = dbHelper.getReadableDatabase();
+        List<String> list = new ArrayList<>();
+
+        String sql = "SELECT DISTINCT " +
+                DatabaseHelper.COLUMN_PIZZA_CATEGORY +
+                " FROM " + DatabaseHelper.TABLE_PIZZAS +
+                " WHERE " + DatabaseHelper.COLUMN_PIZZA_CATEGORY +
+                " IS NOT NULL ORDER BY " +
+                DatabaseHelper.COLUMN_PIZZA_CATEGORY;
+
+        Cursor c = db.rawQuery(sql, null);
+
+        while (c.moveToNext()) {
+            list.add(c.getString(c.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PIZZA_CATEGORY)));
+        }
+        c.close();
+        db.close();
+        return list;
+    }
+
+    public void insertOrUpdate(List<Pizza> pizzas) {
+        db = dbHelper.getWritableDatabase();
+        db.beginTransaction();
+        try {
+            for (Pizza p : pizzas) {
+                ContentValues cv = new ContentValues();
+                cv.put(DatabaseHelper.COLUMN_PIZZA_ID, p.getPizzaId());
+                cv.put(DatabaseHelper.COLUMN_PIZZA_NAME, p.getName());
+                cv.put(DatabaseHelper.COLUMN_PIZZA_DESCRIPTION, p.getDescription());
+                cv.put(DatabaseHelper.COLUMN_PIZZA_PRICE, p.getPrice());
+                cv.put(DatabaseHelper.COLUMN_PIZZA_IMAGE, p.getImage());
+                cv.put(DatabaseHelper.COLUMN_PIZZA_CATEGORY, p.getCategory());
+                cv.put(DatabaseHelper.COLUMN_PIZZA_RATING, p.getRating());
+
+                if (p.getStock() != 0)
+                    cv.put(DatabaseHelper.COLUMN_PIZZA_STOCK, p.getStock());
+
+                if (p.getSize() != null)
+                    cv.put(DatabaseHelper.COLUMN_PIZZA_SIZE, p.getSize());
+
+                long result = db.insertWithOnConflict(DatabaseHelper.TABLE_PIZZAS, null, cv, SQLiteDatabase.CONFLICT_REPLACE);
+                Log.d("DAO", "Insert pizzaId=" + p.getPizzaId() + " → result=" + result);
+            }
+            db.setTransactionSuccessful();
+            Log.d("DAO", "THÀNH CÔNG: Lưu " + pizzas.size() + " pizza");
+        } catch (Exception e) {
+            Log.e("DAO", "LỖI LƯU DB: " + e.getMessage());
+        }
+        finally {
+            db.endTransaction();
+            db.close();
+        }
+    }
+
+    public List<Pizza> search(String query, Double minPrice, Double maxPrice, String category, int page, int size) {
+        db = dbHelper.getReadableDatabase();
+
+        String sql = "SELECT * FROM " + DatabaseHelper.TABLE_PIZZAS + " WHERE 1=1";
+        List<String> args = new ArrayList<>();
+
+        if (query != null && !query.isEmpty()) {
+            sql += " AND name LIKE ?";
+            args.add("%" + query + "%");
+        }
+        if (minPrice != null) {
+            sql += " AND price >= ?";
+            args.add(String.valueOf(minPrice));
+        }
+        if (maxPrice != null && maxPrice < Double.MAX_VALUE) {
+            sql += " AND price <= ?";
+            args.add(String.valueOf(maxPrice));
+        }
+        if (category != null && !category.isEmpty()) {
+            sql += " AND category = ?";
+            args.add(category);
+        }
+        sql += " ORDER BY name LIMIT ? OFFSET ?";
+        args.add(String.valueOf(size));
+        args.add(String.valueOf((page - 1) * size));
+
+
+        Cursor c = db.rawQuery(sql, args.toArray(new String[0]));
+        List<Pizza> list = new ArrayList<>();
+
+        while (c.moveToNext()) {
+            Pizza p = new Pizza();
+            p.setPizzaId(c.getInt(c.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PIZZA_ID)));
+            p.setName(c.getString(c.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PIZZA_NAME)));
+            p.setDescription(c.getString(c.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PIZZA_DESCRIPTION)));
+            p.setPrice(c.getDouble(c.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PIZZA_PRICE)));
+            p.setImage(c.getString(c.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PIZZA_IMAGE)));
+            p.setCategory(c.getString(c.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PIZZA_CATEGORY)));
+            p.setRating(c.getDouble(c.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PIZZA_RATING)));
+
+            p.setSize(c.getString(c.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PIZZA_SIZE)));
+            p.setStock(c.getInt(c.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PIZZA_STOCK)));
+
+            list.add(p);
+        }
+        c.close();
+        db.close();
+        return list;
+    }
+
+    public List<String> getSuggestions(String query) {
+        db = dbHelper.getReadableDatabase();
+        List<String> list = new ArrayList<>();
+        String sql = "SELECT name FROM pizzas WHERE name LIKE ? LIMIT 5";
+        Cursor c = db.rawQuery(sql, new String[]{"%" + query + "%"});
+        while (c.moveToNext()) {
+            list.add(c.getString(c.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PIZZA_NAME)));
+        }
+        c.close();
+        db.close();
+        return list;
     }
 }

@@ -13,6 +13,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     // Database info
     private static final String DATABASE_NAME = "pizzaapp.db";
     private static final int DATABASE_VERSION = 1;
+    private static DatabaseHelper instance;
     
     // Table names
     public static final String TABLE_USERS = "users";
@@ -90,6 +91,13 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public static final String COLUMN_STATUS_NAME = "status_name";
     public static final String COLUMN_STATUS_TIMESTAMP = "timestamp";
     public static final String COLUMN_STATUS_DESCRIPTION = "description";
+
+    public static synchronized DatabaseHelper getInstance(Context context) {
+        if (instance == null) {
+            instance = new DatabaseHelper(context.getApplicationContext());
+        }
+        return instance;
+    }
     
     public DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -192,6 +200,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.execSQL("CREATE INDEX idx_order_user ON " + TABLE_ORDERS + "(" + COLUMN_ORDER_USER_ID + ")");
         db.execSQL("CREATE INDEX idx_order_status ON " + TABLE_ORDERS + "(" + COLUMN_ORDER_STATUS + ")");
         db.execSQL("CREATE INDEX idx_payment_status ON " + TABLE_PAYMENTS + "(" + COLUMN_PAYMENT_STATUS + ")");
+
+        db.execSQL("CREATE INDEX idx_pizza_name ON pizzas(name)");
+        db.execSQL("CREATE INDEX idx_pizza_price ON pizzas(price)");
+        db.execSQL("CREATE INDEX idx_pizza_category ON pizzas(category)");
     }
     
     @Override
