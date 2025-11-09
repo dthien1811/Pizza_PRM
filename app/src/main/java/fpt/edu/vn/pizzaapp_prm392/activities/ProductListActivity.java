@@ -30,6 +30,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.slider.RangeSlider;
 
 import java.util.Arrays;
@@ -44,6 +45,7 @@ import fpt.edu.vn.pizzaapp_prm392.models.Pizza;
 import fpt.edu.vn.pizzaapp_prm392.services.PizzaApiService;
 import fpt.edu.vn.pizzaapp_prm392.services.RetrofitClient;
 import fpt.edu.vn.pizzaapp_prm392.services.SyncService;
+import fpt.edu.vn.pizzaapp_prm392.utils.SessionManager;
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.core.Flowable;
 import retrofit2.Call;
@@ -76,6 +78,12 @@ public class ProductListActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_product_list);
+        SessionManager sm = new SessionManager(this);
+        if (!sm.isLoggedIn()) {
+            startActivity(new Intent(this, LoginActivity.class));
+            finish();
+            return;
+        }
 
         init();
         setupRV();
@@ -139,6 +147,20 @@ public class ProductListActivity extends AppCompatActivity {
                 return true;
             }
         });
+
+        FloatingActionButton btnCart = findViewById(R.id.btn_cart);
+        btnCart.setOnClickListener(v -> {
+            SessionManager sm = new SessionManager(this);
+            if (!sm.isLoggedIn()) {
+                Toast.makeText(this, "Vui lòng đăng nhập để xem giỏ hàng", Toast.LENGTH_SHORT).show();
+                startActivity(new Intent(this, LoginActivity.class));
+                return;
+            }
+
+            Intent i = new Intent(this, CartActivity.class);
+            startActivity(i);
+        });
+
     }
 
     private void setupFilter() {

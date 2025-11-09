@@ -10,6 +10,14 @@ import java.util.List;
 
 import fpt.edu.vn.pizzaapp_prm392.database.DatabaseHelper;
 import fpt.edu.vn.pizzaapp_prm392.models.Order;
+import java.util.List;
+import java.util.UUID;
+
+import fpt.edu.vn.pizzaapp_prm392.models.CartItem;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+
 
 /**
  * OrderDAO - Thao tác dữ liệu đơn hàng
@@ -198,8 +206,8 @@ public class OrderDAO {
         try {
             ContentValues values = new ContentValues();
             values.put(DatabaseHelper.COLUMN_ORDER_STATUS, status);
-            values.put(DatabaseHelper.COLUMN_ORDER_UPDATED_AT, java.time.LocalDateTime.now().toString());
-            
+            values.put(DatabaseHelper.COLUMN_ORDER_UPDATED_AT, nowString());
+
             return db.update(
                     DatabaseHelper.TABLE_ORDERS,
                     values,
@@ -223,8 +231,8 @@ public class OrderDAO {
             values.put(DatabaseHelper.COLUMN_ORDER_NOTES, order.getNotes());
             values.put(DatabaseHelper.COLUMN_ORDER_STATUS, order.getStatus());
             values.put(DatabaseHelper.COLUMN_ORDER_PAYMENT_METHOD, order.getPaymentMethod());
-            values.put(DatabaseHelper.COLUMN_ORDER_UPDATED_AT, java.time.LocalDateTime.now().toString());
-            
+            values.put(DatabaseHelper.COLUMN_ORDER_UPDATED_AT, nowString());
+
             return db.update(
                     DatabaseHelper.TABLE_ORDERS,
                     values,
@@ -318,4 +326,64 @@ public class OrderDAO {
         order.setUpdatedAt(cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_ORDER_UPDATED_AT)));
         return order;
     }
+
+    public long createOrderFromCart(int userId,
+                                    String name,
+                                    String phone,
+                                    String address,
+                                    String notes,
+                                    String paymentMethod,
+                                    List<CartItem> cart,
+                                    double totalPrice) {
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+        db.beginTransaction();
+        long orderId = -1;
+
+        try {
+            // 1) Insert orders
+            ContentValues ov = new ContentValues();
+            ov.put(DatabaseHelper.COLUMN_ORDER_CODE, genOrderCode());
+            ov.put(DatabaseHelper.COLUMN_ORDER_USER_ID, userId);
+            ov.put(DatabaseHelper.COLUMN_ORDER_TOTAL_PRICE, totalPrice);
+            ov.put(DatabaseHelper.COLUMN_ORDER_ADDRESS, address);
+            ov.put(DatabaseHelper.COLUMN_ORDER_PHONE, phone);
+            ov.put(DatabaseHelper.COLUMN_ORDER_NOTES, notes);
+            ov.put(DatabaseHelper.COLUMN_ORDER_STATUS, "PENDING");
+            ov.put(DatabaseHelper.COLUMN_ORDER_PAYMENT_METHOD, paymentMethod);
+
+            orderId = db.insert(DatabaseHelper.TABLE_ORDERS, null, ov);
+            if (orderId <= 0) throw new RuntimeException("Insert orders failed");
+
+            // 2) Insert order_items từ giỏ
+            for (CartItem c : cart) {
+                ContentValues iv = new ContentValues();
+                iv.put(DatabaseHelper.COLUMN_ORDER_ITEM_ORDER_ID, orderId);
+                iv.put(DatabaseHelper.COLUMN_ORDER_ITEM_PIZZA_ID, c.getPizzaId());
+                iv.put(DatabaseHelper.COLUMN_ORDER_ITEM_QUANTITY, c.getQuantity());
+                iv.put(DatabaseHelper.COLUMN_ORDER_ITEM_PRICE, c.getPrice());
+                long r = db.insert(DatabaseHelper.TABLE_ORDER_ITEMS, null, iv);
+                if (r <= 0) throw new RuntimeException("Insert order_items failed");
+            }
+
+            // 3) Xoá giỏ của user
+            db.delete(DatabaseHelper.TABLE_CART_ITEMS,
+                    DatabaseHelper.COLUMN_CART_USER_ID + "=?",
+                    new String[]{String.valueOf(userId)});
+
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+            db.close();
+        }
+        return orderId;
+    }
+
+    private String genOrderCode() {
+        return "OD" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+    }
+
+    private String nowString() {
+        return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(new Date());
+    }
+
 }

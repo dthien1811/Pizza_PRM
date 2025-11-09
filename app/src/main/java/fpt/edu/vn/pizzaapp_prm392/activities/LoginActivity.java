@@ -48,10 +48,10 @@ public class LoginActivity extends AppCompatActivity {
         userDAO = new UserDAO(this);
         sessionManager = new SessionManager(this);
         
-        // Check if already logged in
-        if (sessionManager.isLoggedIn() && sessionManager.isTokenValid()) {
-            navigateToMain();
-        }
+//        // Check if already logged in
+//        if (sessionManager.isLoggedIn() && sessionManager.isTokenValid()) {
+//            navigateToMain();
+//        }
     }
     
     /**
