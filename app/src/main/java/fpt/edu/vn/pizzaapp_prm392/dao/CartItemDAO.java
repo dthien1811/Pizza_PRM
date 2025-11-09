@@ -11,292 +11,239 @@ import java.util.List;
 import fpt.edu.vn.pizzaapp_prm392.database.DatabaseHelper;
 import fpt.edu.vn.pizzaapp_prm392.models.CartItem;
 
-/**
- * CartItemDAO - Thao tác dữ liệu giỏ hàng
- */
 public class CartItemDAO {
-    
-    private DatabaseHelper dbHelper;
+
+    private final DatabaseHelper dbHelper; // dùng singleton
     private SQLiteDatabase db;
-    
+
     public CartItemDAO(Context context) {
-        dbHelper = new DatabaseHelper(context);
+        // rất quan trọng: dùng getInstance để tránh mở nhiều DB rồi đóng nhầm
+        this.dbHelper = DatabaseHelper.getInstance(context);
     }
-    
-    /**
-     * Mở kết nối cơ sở dữ liệu
-     */
+
+    /** Mở DB nếu chưa mở */
     public void open() {
-        db = dbHelper.getWritableDatabase();
+        if (db == null || !db.isOpen()) {
+            db = dbHelper.getWritableDatabase();
+        }
     }
-    
-    /**
-     * Đóng kết nối cơ sở dữ liệu
-     */
+
+    /** Đóng DB nếu đang mở (chỉ nên gọi ở public API top-level) */
     public void close() {
-        dbHelper.close();
+        if (db != null && db.isOpen()) {
+            db.close();
+        }
     }
-    
+
     /**
-     * Thêm mục vào giỏ hàng
+     * Thêm mục vào giỏ (nếu đã có cùng userId + pizzaId thì cộng dồn quantity)
+     * Top-level API: tự open/close
      */
     public long addToCart(CartItem cartItem) {
         open();
         try {
-            // Kiểm tra nếu pizza đã có trong giỏ hàng của user
-            CartItem existingItem = getCartItemByUserAndPizza(cartItem.getUserId(), cartItem.getPizzaId());
-            
-            if (existingItem != null) {
-                // Cập nhật số lượng nếu đã tồn tại
-                existingItem.setQuantity(existingItem.getQuantity() + cartItem.getQuantity());
-                updateCartItem(existingItem);
-                return existingItem.getCartId();
+            CartItem existing = getCartItemByUserAndPizza_NoOpenClose(
+                    cartItem.getUserId(), cartItem.getPizzaId());
+
+            if (existing != null) {
+                existing.setQuantity(existing.getQuantity() + cartItem.getQuantity());
+                updateCartItem_NoOpenClose(existing);
+                return existing.getCartId(); // trả lại id của dòng hiện có
             } else {
-                // Thêm mục mới
                 ContentValues values = new ContentValues();
                 values.put(DatabaseHelper.COLUMN_CART_USER_ID, cartItem.getUserId());
                 values.put(DatabaseHelper.COLUMN_CART_PIZZA_ID, cartItem.getPizzaId());
                 values.put(DatabaseHelper.COLUMN_CART_QUANTITY, cartItem.getQuantity());
                 values.put(DatabaseHelper.COLUMN_CART_PRICE, cartItem.getPrice());
                 values.put(DatabaseHelper.COLUMN_CART_NOTES, cartItem.getNotes());
-                
                 return db.insert(DatabaseHelper.TABLE_CART_ITEMS, null, values);
             }
         } finally {
             close();
         }
     }
-    
-    /**
-     * Lấy giỏ hàng của người dùng
-     */
+
+    /** Lấy danh sách giỏ theo userId (top-level API) */
     public List<CartItem> getCartByUser(int userId) {
         open();
-        List<CartItem> cartItems = new ArrayList<>();
-        try {
-            Cursor cursor = db.query(
-                    DatabaseHelper.TABLE_CART_ITEMS,
-                    null,
-                    DatabaseHelper.COLUMN_CART_USER_ID + " = ?",
-                    new String[]{String.valueOf(userId)},
-                    null, null, null
-            );
-            
+        List<CartItem> list = new ArrayList<>();
+        try (Cursor cursor = db.query(
+                DatabaseHelper.TABLE_CART_ITEMS,
+                null,
+                DatabaseHelper.COLUMN_CART_USER_ID + "=?",
+                new String[]{String.valueOf(userId)},
+                null, null, null
+        )) {
             if (cursor != null) {
                 while (cursor.moveToNext()) {
-                    cartItems.add(cursorToCartItem(cursor));
+                    list.add(cursorToCartItem(cursor));
                 }
-                cursor.close();
             }
-        } finally {
-            close();
-        }
-        return cartItems;
-    }
-    
-    /**
-     * Lấy mục giỏ hàng theo user và pizza
-     */
-    private CartItem getCartItemByUserAndPizza(int userId, int pizzaId) {
-        open();
-        try {
-            Cursor cursor = db.query(
-                    DatabaseHelper.TABLE_CART_ITEMS,
-                    null,
-                    DatabaseHelper.COLUMN_CART_USER_ID + " = ? AND " + 
-                    DatabaseHelper.COLUMN_CART_PIZZA_ID + " = ?",
-                    new String[]{String.valueOf(userId), String.valueOf(pizzaId)},
-                    null, null, null
-            );
-            
-            if (cursor != null && cursor.moveToFirst()) {
-                CartItem item = cursorToCartItem(cursor);
-                cursor.close();
-                return item;
-            }
-            return null;
+            return list;
         } finally {
             close();
         }
     }
-    
-    /**
-     * Lấy mục giỏ hàng theo ID
-     */
+
+    /** Lấy item theo cartId (top-level API) */
     public CartItem getCartItemById(int cartId) {
         open();
-        try {
-            Cursor cursor = db.query(
-                    DatabaseHelper.TABLE_CART_ITEMS,
-                    null,
-                    DatabaseHelper.COLUMN_CART_ID + " = ?",
-                    new String[]{String.valueOf(cartId)},
-                    null, null, null
-            );
-            
+        try (Cursor cursor = db.query(
+                DatabaseHelper.TABLE_CART_ITEMS,
+                null,
+                DatabaseHelper.COLUMN_CART_ID + "=?",
+                new String[]{String.valueOf(cartId)},
+                null, null, null
+        )) {
             if (cursor != null && cursor.moveToFirst()) {
-                CartItem item = cursorToCartItem(cursor);
-                cursor.close();
-                return item;
+                return cursorToCartItem(cursor);
             }
             return null;
         } finally {
             close();
         }
     }
-    
-    /**
-     * Cập nhật số lượng mục trong giỏ
-     */
+
+    /** Cập nhật số lượng (top-level API) */
     public int updateCartQuantity(int cartId, int quantity) {
         open();
         try {
             ContentValues values = new ContentValues();
             values.put(DatabaseHelper.COLUMN_CART_QUANTITY, quantity);
-            
             return db.update(
                     DatabaseHelper.TABLE_CART_ITEMS,
                     values,
-                    DatabaseHelper.COLUMN_CART_ID + " = ?",
+                    DatabaseHelper.COLUMN_CART_ID + "=?",
                     new String[]{String.valueOf(cartId)}
             );
         } finally {
             close();
         }
     }
-    
-    /**
-     * Cập nhật mục giỏ hàng
-     */
+
+    /** Cập nhật toàn bộ item (top-level API) */
     public int updateCartItem(CartItem cartItem) {
         open();
         try {
-            ContentValues values = new ContentValues();
-            values.put(DatabaseHelper.COLUMN_CART_QUANTITY, cartItem.getQuantity());
-            values.put(DatabaseHelper.COLUMN_CART_PRICE, cartItem.getPrice());
-            values.put(DatabaseHelper.COLUMN_CART_NOTES, cartItem.getNotes());
-            
-            return db.update(
-                    DatabaseHelper.TABLE_CART_ITEMS,
-                    values,
-                    DatabaseHelper.COLUMN_CART_ID + " = ?",
-                    new String[]{String.valueOf(cartItem.getCartId())}
-            );
+            return updateCartItem_NoOpenClose(cartItem);
         } finally {
             close();
         }
     }
-    
-    /**
-     * Xóa mục khỏi giỏ hàng
-     */
+
+    /** Xoá 1 dòng khỏi giỏ (top-level API) */
     public int removeFromCart(int cartId) {
         open();
         try {
             return db.delete(
                     DatabaseHelper.TABLE_CART_ITEMS,
-                    DatabaseHelper.COLUMN_CART_ID + " = ?",
+                    DatabaseHelper.COLUMN_CART_ID + "=?",
                     new String[]{String.valueOf(cartId)}
             );
         } finally {
             close();
         }
     }
-    
-    /**
-     * Xóa toàn bộ giỏ hàng của người dùng
-     */
+
+    /** Xoá toàn bộ giỏ của user (top-level API) */
     public int clearUserCart(int userId) {
         open();
         try {
             return db.delete(
                     DatabaseHelper.TABLE_CART_ITEMS,
-                    DatabaseHelper.COLUMN_CART_USER_ID + " = ?",
+                    DatabaseHelper.COLUMN_CART_USER_ID + "=?",
                     new String[]{String.valueOf(userId)}
             );
         } finally {
             close();
         }
     }
-    
-    /**
-     * Tính tổng giá của giỏ hàng
-     */
+
+    /** Tổng tiền giỏ hàng (top-level API) */
     public double getCartTotal(int userId) {
         open();
-        try {
-            Cursor cursor = db.rawQuery(
-                    "SELECT SUM(" + DatabaseHelper.COLUMN_CART_PRICE + " * " + 
-                    DatabaseHelper.COLUMN_CART_QUANTITY + ") FROM " + 
-                    DatabaseHelper.TABLE_CART_ITEMS + " WHERE " + 
-                    DatabaseHelper.COLUMN_CART_USER_ID + " = ?",
-                    new String[]{String.valueOf(userId)}
-            );
-            
-            double total = 0;
-            if (cursor != null) {
-                cursor.moveToFirst();
-                total = cursor.getDouble(0);
-                cursor.close();
+        try (Cursor c = db.rawQuery(
+                "SELECT SUM(" + DatabaseHelper.COLUMN_CART_PRICE + " * " + DatabaseHelper.COLUMN_CART_QUANTITY + ") " +
+                        "FROM " + DatabaseHelper.TABLE_CART_ITEMS + " WHERE " + DatabaseHelper.COLUMN_CART_USER_ID + "=?",
+                new String[]{String.valueOf(userId)}
+        )) {
+            if (c != null && c.moveToFirst()) {
+                return c.getDouble(0);
             }
-            return total;
+            return 0;
         } finally {
             close();
         }
     }
-    
-    /**
-     * Lấy số lượng mục trong giỏ
-     */
+
+    /** Số dòng trong giỏ (top-level API) */
     public int getCartItemCount(int userId) {
         open();
-        try {
-            Cursor cursor = db.rawQuery(
-                    "SELECT COUNT(*) FROM " + DatabaseHelper.TABLE_CART_ITEMS + 
-                    " WHERE " + DatabaseHelper.COLUMN_CART_USER_ID + " = ?",
-                    new String[]{String.valueOf(userId)}
-            );
-            
-            int count = 0;
-            if (cursor != null) {
-                cursor.moveToFirst();
-                count = cursor.getInt(0);
-                cursor.close();
+        try (Cursor c = db.rawQuery(
+                "SELECT COUNT(*) FROM " + DatabaseHelper.TABLE_CART_ITEMS +
+                        " WHERE " + DatabaseHelper.COLUMN_CART_USER_ID + "=?",
+                new String[]{String.valueOf(userId)}
+        )) {
+            if (c != null && c.moveToFirst()) {
+                return c.getInt(0);
             }
-            return count;
+            return 0;
         } finally {
             close();
         }
     }
-    
-    /**
-     * Lấy tổng số lượng sản phẩm trong giỏ
-     */
+
+    /** Tổng số lượng (sum quantity) (top-level API) */
     public int getTotalQuantityInCart(int userId) {
         open();
-        try {
-            Cursor cursor = db.rawQuery(
-                    "SELECT SUM(" + DatabaseHelper.COLUMN_CART_QUANTITY + ") FROM " + 
-                    DatabaseHelper.TABLE_CART_ITEMS + " WHERE " + 
-                    DatabaseHelper.COLUMN_CART_USER_ID + " = ?",
-                    new String[]{String.valueOf(userId)}
-            );
-            
-            int total = 0;
-            if (cursor != null) {
-                cursor.moveToFirst();
-                total = cursor.getInt(0);
-                cursor.close();
+        try (Cursor c = db.rawQuery(
+                "SELECT SUM(" + DatabaseHelper.COLUMN_CART_QUANTITY + ") FROM " + DatabaseHelper.TABLE_CART_ITEMS +
+                        " WHERE " + DatabaseHelper.COLUMN_CART_USER_ID + "=?",
+                new String[]{String.valueOf(userId)}
+        )) {
+            if (c != null && c.moveToFirst()) {
+                return c.getInt(0);
             }
-            return total;
+            return 0;
         } finally {
             close();
         }
     }
-    
-    /**
-     * Chuyển Cursor thành đối tượng CartItem
-     */
+
+    /* ================== HÀM INTERNAL: KHÔNG open()/close() ================== */
+
+    /** Lấy item theo (userId, pizzaId) để cộng dồn — KHÔNG open/close */
+    private CartItem getCartItemByUserAndPizza_NoOpenClose(int userId, int pizzaId) {
+        try (Cursor cursor = db.query(
+                DatabaseHelper.TABLE_CART_ITEMS,
+                null,
+                DatabaseHelper.COLUMN_CART_USER_ID + "=? AND " +
+                        DatabaseHelper.COLUMN_CART_PIZZA_ID + "=?",
+                new String[]{String.valueOf(userId), String.valueOf(pizzaId)},
+                null, null, null
+        )) {
+            if (cursor != null && cursor.moveToFirst()) {
+                return cursorToCartItem(cursor);
+            }
+            return null;
+        }
+    }
+
+    /** Update item khi đã có DB mở sẵn — KHÔNG open/close */
+    private int updateCartItem_NoOpenClose(CartItem cartItem) {
+        ContentValues values = new ContentValues();
+        values.put(DatabaseHelper.COLUMN_CART_QUANTITY, cartItem.getQuantity());
+        values.put(DatabaseHelper.COLUMN_CART_PRICE, cartItem.getPrice());
+        values.put(DatabaseHelper.COLUMN_CART_NOTES, cartItem.getNotes());
+        return db.update(
+                DatabaseHelper.TABLE_CART_ITEMS,
+                values,
+                DatabaseHelper.COLUMN_CART_ID + "=?",
+                new String[]{String.valueOf(cartItem.getCartId())}
+        );
+    }
+
+    /* ================== Helper ================== */
     private CartItem cursorToCartItem(Cursor cursor) {
         CartItem item = new CartItem();
         item.setCartId(cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_CART_ID)));

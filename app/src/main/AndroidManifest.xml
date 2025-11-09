@@ -82,6 +82,20 @@
             android:parentActivityName=".activities.ProductListActivity"
             android:screenOrientation="portrait"/>
 
+
+        <activity
+            android:name=".activities.CartActivity"
+            android:exported="false"
+            android:label="Giỏ hàng"
+            android:screenOrientation="portrait"
+            android:parentActivityName=".activities.ProductListActivity" />
+
+        <activity
+            android:name=".activities.CheckoutActivity"
+            android:exported="false"
+            android:label="Thanh toán"
+            android:screenOrientation="portrait"/>
+
     </application>
 
 </manifest>
