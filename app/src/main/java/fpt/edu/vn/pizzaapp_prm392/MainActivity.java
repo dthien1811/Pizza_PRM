@@ -8,6 +8,8 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import fpt.edu.vn.pizzaapp_prm392.database.DatabaseHelper;
+
 public class MainActivity extends AppCompatActivity {
 
     @Override

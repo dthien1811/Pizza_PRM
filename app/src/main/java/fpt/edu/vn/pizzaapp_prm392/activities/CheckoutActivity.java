@@ -128,13 +128,17 @@ public class CheckoutActivity extends AppCompatActivity implements CartAdapter.O
         double total = subtotal + SHIPPING_FEE;
 
         io.execute(() -> {
-            long orderId = new OrderDAO(this).createOrderFromCart(
-                    userId, name, phone, address, notes, "COD", items, total
+            long orderId = new OrderDAO(this).createOrderFromCartAndPayment(
+                    userId,
+                    name, phone, address, notes,
+                    "COD",          // hoặc lấy từ radio/selector phương thức thanh toán
+                    items,
+                    total           // nhớ là total đã gồm shipping
             );
             runOnUiThread(() -> {
                 if (orderId > 0) {
                     Toast.makeText(this, "Đặt hàng thành công!", Toast.LENGTH_LONG).show();
-                    finish();
+                    finish(); // hoặc điều hướng sang màn hình “Chi tiết đơn hàng”
                 } else {
                     Toast.makeText(this, "Đặt hàng thất bại!", Toast.LENGTH_SHORT).show();
                 }
