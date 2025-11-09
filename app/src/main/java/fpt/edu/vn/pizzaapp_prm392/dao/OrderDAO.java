@@ -26,9 +26,9 @@ public class OrderDAO {
     
     private DatabaseHelper dbHelper;
     private SQLiteDatabase db;
-    
+
     public OrderDAO(Context context) {
-        dbHelper = new DatabaseHelper(context);
+        this.dbHelper = DatabaseHelper.getInstance(context);
     }
     
     /**
@@ -327,20 +327,23 @@ public class OrderDAO {
         return order;
     }
 
-    public long createOrderFromCart(int userId,
-                                    String name,
-                                    String phone,
-                                    String address,
-                                    String notes,
-                                    String paymentMethod,
-                                    List<CartItem> cart,
-                                    double totalPrice) {
+    /** Tạo đơn hàng từ giỏ + tạo payment (PENDING) + xoá giỏ – tất cả trong 1 transaction */
+    public long createOrderFromCartAndPayment(
+            int userId,
+            String name,         // hiện dùng để log/ghi chú nếu muốn
+            String phone,
+            String address,
+            String notes,
+            String paymentMethod,   // "COD" / "CREDIT_CARD" / ...
+            List<CartItem> cart,
+            double totalPrice      // đã gồm phí ship nếu có
+    ) {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         db.beginTransaction();
         long orderId = -1;
 
         try {
-            // 1) Insert orders
+            // 1) Insert ORDERS
             ContentValues ov = new ContentValues();
             ov.put(DatabaseHelper.COLUMN_ORDER_CODE, genOrderCode());
             ov.put(DatabaseHelper.COLUMN_ORDER_USER_ID, userId);
@@ -350,11 +353,10 @@ public class OrderDAO {
             ov.put(DatabaseHelper.COLUMN_ORDER_NOTES, notes);
             ov.put(DatabaseHelper.COLUMN_ORDER_STATUS, "PENDING");
             ov.put(DatabaseHelper.COLUMN_ORDER_PAYMENT_METHOD, paymentMethod);
-
             orderId = db.insert(DatabaseHelper.TABLE_ORDERS, null, ov);
             if (orderId <= 0) throw new RuntimeException("Insert orders failed");
 
-            // 2) Insert order_items từ giỏ
+            // 2) Insert ORDER_ITEMS từ giỏ
             for (CartItem c : cart) {
                 ContentValues iv = new ContentValues();
                 iv.put(DatabaseHelper.COLUMN_ORDER_ITEM_ORDER_ID, orderId);
@@ -365,7 +367,24 @@ public class OrderDAO {
                 if (r <= 0) throw new RuntimeException("Insert order_items failed");
             }
 
-            // 3) Xoá giỏ của user
+            // 3) Insert PAYMENTS (mặc định PENDING, 1–1 với order theo schema UNIQUE(order_id))
+            ContentValues pv = new ContentValues();
+            pv.put(DatabaseHelper.COLUMN_PAYMENT_ORDER_ID, orderId);
+            pv.put(DatabaseHelper.COLUMN_PAYMENT_METHOD, paymentMethod);    // ví dụ: COD
+            pv.put(DatabaseHelper.COLUMN_PAYMENT_AMOUNT, totalPrice);
+            pv.put(DatabaseHelper.COLUMN_PAYMENT_STATUS, "PENDING");
+            pv.put(DatabaseHelper.COLUMN_PAYMENT_TRANSACTION_ID, (String) null); // chưa có
+            long payId = db.insert(DatabaseHelper.TABLE_PAYMENTS, null, pv);
+            if (payId <= 0) throw new RuntimeException("Insert payments failed");
+
+            // 4) (tuỳ chọn) log lịch sử trạng thái
+            ContentValues sv = new ContentValues();
+            sv.put(DatabaseHelper.COLUMN_STATUS_ORDER_ID, orderId);
+            sv.put(DatabaseHelper.COLUMN_STATUS_NAME, "PENDING");
+            sv.put(DatabaseHelper.COLUMN_STATUS_DESCRIPTION, "Đơn hàng vừa tạo");
+            db.insert(DatabaseHelper.TABLE_ORDER_STATUS, null, sv);
+
+            // 5) Clear giỏ
             db.delete(DatabaseHelper.TABLE_CART_ITEMS,
                     DatabaseHelper.COLUMN_CART_USER_ID + "=?",
                     new String[]{String.valueOf(userId)});
