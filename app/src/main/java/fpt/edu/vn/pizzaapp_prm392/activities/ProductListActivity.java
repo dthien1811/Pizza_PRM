@@ -62,7 +62,7 @@ public class ProductListActivity extends AppCompatActivity {
     private PizzaApiService api;
     private PizzaDAO dao;
     private Handler handler = new Handler(Looper.getMainLooper());
-    private Double minP = 0.0, maxP = Double.MAX_VALUE;
+    private Double minP = 0.0, maxP = 500000.0;
     private String cat = "";
     private ListPopupWindow suggestionsPopup;
     private PizzaDAO pizzaDAO;
@@ -250,7 +250,7 @@ public class ProductListActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 currentMinPrice = 0.0;
-                currentMaxPrice = Double.MAX_VALUE;
+                currentMaxPrice = 500000.0;
 
                 minP = currentMinPrice;
                 maxP = currentMaxPrice;
