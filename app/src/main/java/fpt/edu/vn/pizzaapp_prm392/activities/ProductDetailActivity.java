@@ -47,6 +47,8 @@ public class ProductDetailActivity extends AppCompatActivity {
         TextView desc = findViewById(R.id.tv_desc);
         TextView price = findViewById(R.id.tv_price);
         RatingBar rating = findViewById(R.id.rating_bar);
+        TextView stock = findViewById(R.id.tv_stock);
+        TextView size = findViewById(R.id.tv_size);
         btnAddToCart = findViewById(R.id.btn_add_to_cart);
 
         // Nhận pizza
@@ -56,6 +58,9 @@ public class ProductDetailActivity extends AppCompatActivity {
             desc.setText(pizza.getDescription());
             price.setText(String.format("%,.0f đ", pizza.getPrice()).replace(",", "."));
             rating.setRating((float) pizza.getRating());
+            stock.setText(String.format("Còn %d sản phẩm", pizza.getStock()));
+            size.setText(String.format("Kích thước: %s", pizza.getSize()));
+
             Glide.with(this).load(pizza.getImage()).into(iv);
         }
 

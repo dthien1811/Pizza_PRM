@@ -57,7 +57,7 @@ public class ProductAdapter extends PagingDataAdapter<Pizza, ProductAdapter.View
 
     class ViewHolder extends RecyclerView.ViewHolder {
         ImageView iv;
-        TextView name, price;
+        TextView name, price, stock, size;
         RatingBar rating;
 
         ViewHolder(@NonNull View v) {
@@ -66,6 +66,8 @@ public class ProductAdapter extends PagingDataAdapter<Pizza, ProductAdapter.View
             name = v.findViewById(R.id.tv_name);
             price = v.findViewById(R.id.tv_price);
             rating = v.findViewById(R.id.rating_bar);
+            stock = v.findViewById(R.id.tv_stock);
+            size = v.findViewById(R.id.tv_size);
 
             v.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -83,6 +85,8 @@ public class ProductAdapter extends PagingDataAdapter<Pizza, ProductAdapter.View
             name.setText(p.getName());
             price.setText(String.format("%,.0f đ", p.getPrice()));
             rating.setRating((float) p.getRating());
+            stock.setText(String.format("Còn %d", p.getStock()));
+            size.setText(p.getSize());
             Glide.with(context).load(p.getImage())
                     .override(300, 300)
                     .placeholder(R.drawable.placeholder)
