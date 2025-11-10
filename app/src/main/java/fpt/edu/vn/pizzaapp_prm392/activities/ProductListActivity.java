@@ -69,9 +69,13 @@ public class ProductListActivity extends AppCompatActivity {
     private Pager<Integer, Pizza> pager;
 
     private Double currentMinPrice = 0.0;
-    private Double currentMaxPrice = Double.MAX_VALUE;
+    private Double currentMaxPrice = 500000.0;
     private String currentCategory = "";
 
+    private LinearLayout btnSort;
+    private MaterialButton btnSortIcon;
+    private TextView btnSortTv;
+    private String sortOrder = "asc";
 
 
     @Override
@@ -99,7 +103,7 @@ public class ProductListActivity extends AppCompatActivity {
 
                 runOnUiThread(() -> {
                     Log.d("UI", "Đồng bộ xong → LOAD danh sách bên trong");
-                    loadPizzasFromDB("", null, null, ""); // BÂY GIỜ MỚI LOAD
+                    loadPizzasFromDB("", null, null, "", sortOrder); // BÂY GIỜ MỚI LOAD
                 });
             }
         });
@@ -116,6 +120,23 @@ public class ProductListActivity extends AppCompatActivity {
         empty = findViewById(R.id.tv_empty);
         api = RetrofitClient.getClient().create(PizzaApiService.class);
         dao = new PizzaDAO(this);
+
+        btnSort = findViewById(R.id.btn_sort);
+        btnSortIcon = findViewById(R.id.btn_sort_icon);
+        btnSortTv = findViewById(R.id.btn_sort_tv);
+        btnSortTv.setText(sortOrder);
+
+        btnSort.setOnClickListener(view1 -> {
+            if (sortOrder.equalsIgnoreCase("asc")) {
+                sortOrder = "desc";
+                btnSortIcon.setIconResource(R.drawable.ic_sort_desc);
+            } else {
+                sortOrder = "asc";
+                btnSortIcon.setIconResource(R.drawable.ic_sort_asc);
+            }
+            loadPizzasFromDB(search.getQuery().toString(),minP, maxP, cat, sortOrder);
+            btnSortTv.setText(sortOrder);
+        });
     }
 
     private void setupRV() {
@@ -135,14 +156,14 @@ public class ProductListActivity extends AppCompatActivity {
                 handler.removeCallbacksAndMessages(null);
                 handler.postDelayed(() -> {
                     fetchSuggestions(newText);
-                    loadPizzasFromDB(newText, minP, maxP, cat);
+                    loadPizzasFromDB(newText, minP, maxP, cat, sortOrder);
                 }, 400);
                 return true;
             }
 
             @Override
             public boolean onQueryTextSubmit(String q) {
-                loadPizzasFromDB(q, minP, maxP, cat);
+                loadPizzasFromDB(q, minP, maxP, cat, sortOrder);
                 if (suggestionsPopup != null) suggestionsPopup.dismiss();
                 return true;
             }
@@ -164,7 +185,7 @@ public class ProductListActivity extends AppCompatActivity {
     }
 
     private void setupFilter() {
-//        addChip("Giá", this::showPrice);
+        addChip("Giá", this::showPrice);
         addChip("Loại", this::showCat);
     }
 
@@ -220,7 +241,7 @@ public class ProductListActivity extends AppCompatActivity {
                 minP = currentMinPrice;
                 maxP = currentMaxPrice;
 
-                loadPizzasFromDB(search.getQuery().toString(), minP, maxP, cat);
+                loadPizzasFromDB(search.getQuery().toString(), minP, maxP, cat, sortOrder);
                 dialog.dismiss();
             }
         });
@@ -235,7 +256,7 @@ public class ProductListActivity extends AppCompatActivity {
                 maxP = currentMaxPrice;
 
                 slider.setValues(0f, 500000f);
-                loadPizzasFromDB(search.getQuery().toString(), minP, maxP, cat);
+                loadPizzasFromDB(search.getQuery().toString(), minP, maxP, cat, sortOrder);
                 dialog.dismiss();
             }
         });
@@ -268,14 +289,14 @@ public class ProductListActivity extends AppCompatActivity {
             btnApply.setOnClickListener(v -> {
                 currentCategory = selectedTemp[0];
                 cat = currentCategory;
-                loadPizzasFromDB(search.getQuery().toString(), minP, maxP, cat);
+                loadPizzasFromDB(search.getQuery().toString(), minP, maxP, cat, sortOrder);
                 dialog.dismiss();
             });
 
             btnClear.setOnClickListener(v -> {
                 currentCategory = "";
                 cat = "";
-                loadPizzasFromDB(search.getQuery().toString(), minP, maxP, cat);
+                loadPizzasFromDB(search.getQuery().toString(), minP, maxP, cat, sortOrder);
                 dialog.dismiss();
             });
 
@@ -329,7 +350,7 @@ public class ProductListActivity extends AppCompatActivity {
         pb.setVisibility(View.VISIBLE);
         empty.setVisibility(View.GONE);
 
-        RxProductPagingSource src = new RxProductPagingSource(dao, q, minP, maxP, cat);
+        RxProductPagingSource src = new RxProductPagingSource(dao, q, minP, maxP, cat, sortOrder);
 
         Pager<Integer, Pizza> pager = new Pager<>(new PagingConfig(20), () -> src);
 
@@ -344,7 +365,7 @@ public class ProductListActivity extends AppCompatActivity {
     }
 
     @SuppressLint("CheckResult")
-    public void loadPizzasFromDB(String query, Double min, Double max, String cat) {
+    public void loadPizzasFromDB(String query, Double min, Double max, String cat, String sortOrder) {
         Log.d("PAGING_DEBUG", "Tạo Pager mới...");
 
         if (pb == null || empty == null || adapter == null) return;
@@ -352,7 +373,7 @@ public class ProductListActivity extends AppCompatActivity {
         pb.setVisibility(View.VISIBLE);
         empty.setVisibility(View.GONE);
 
-        RxProductPagingSource pagingSource = new RxProductPagingSource(pizzaDAO, query, min, max, cat);
+        RxProductPagingSource pagingSource = new RxProductPagingSource(pizzaDAO, query, min, max, cat, sortOrder);
 
         pager =
                 new Pager<>(

@@ -287,7 +287,7 @@ public class PizzaDAO {
         }
     }
 
-    public List<Pizza> search(String query, Double minPrice, Double maxPrice, String category,
+    public List<Pizza> search(String query, Double minPrice, Double maxPrice, String category, String sortOrder,
                               int page, int size) {
         openReadable();
 
@@ -310,7 +310,12 @@ public class PizzaDAO {
             sql.append(" AND ").append(DatabaseHelper.COLUMN_PIZZA_CATEGORY).append(" = ?");
             args.add(category);
         }
-        sql.append(" ORDER BY ").append(DatabaseHelper.COLUMN_PIZZA_NAME)
+        if ("asc".equalsIgnoreCase(sortOrder)) {
+            sql.append(" ORDER BY ").append(DatabaseHelper.COLUMN_PIZZA_PRICE).append(" ASC");
+        } else {
+            sql.append(" ORDER BY ").append(DatabaseHelper.COLUMN_PIZZA_PRICE).append(" DESC");
+        }
+        sql.append(", ").append(DatabaseHelper.COLUMN_PIZZA_NAME)
                 .append(" LIMIT ? OFFSET ?");
         args.add(String.valueOf(size));
         args.add(String.valueOf(Math.max(0, (page - 1) * size)));

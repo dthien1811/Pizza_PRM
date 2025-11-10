@@ -38,24 +38,58 @@
                 />
         </androidx.appcompat.widget.Toolbar>
 
-        <HorizontalScrollView
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:scrollbars="none"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
             android:layout_marginStart="12dp"
             android:layout_marginEnd="12dp"
             android:layout_marginBottom="8dp"
             >
             <com.google.android.material.chip.ChipGroup
                 android:id="@+id/filter_bar"
-                android:layout_width="wrap_content"
+                android:layout_weight="1"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 app:singleLine="true"
                 app:chipSpacingHorizontal="8dp"
                 app:chipSpacingVertical="4dp"
                 android:padding="4dp"
                 />
-        </HorizontalScrollView>
+            <LinearLayout
+                android:id="@+id/btn_sort"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                >
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_sort_icon"
+                    android:clickable="false"
+                    android:focusable="false"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton.Icon"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    app:icon="@drawable/ic_sort_asc"
+                    app:iconGravity="textStart"
+                    app:iconPadding="0dp"
+                    android:insetLeft="0dp"
+                    android:insetTop="0dp"
+                    android:insetRight="0dp"
+                    android:insetBottom="0dp"
+                    app:strokeWidth="1dp"
+                    app:strokeColor="@android:color/transparent"
+                    android:layout_marginStart="8dp" />
+                <TextView
+                    android:id="@+id/btn_sort_tv"
+                    android:layout_width="35dp"
+                    android:layout_height="wrap_content"
+                    android:text="asc"
+                    />
+            </LinearLayout>
+        </LinearLayout>
     </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.recyclerview.widget.RecyclerView

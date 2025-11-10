@@ -5,6 +5,7 @@ import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import fpt.edu.vn.pizzaapp_prm392.dao.PizzaDAO;
 import fpt.edu.vn.pizzaapp_prm392.models.Pizza;
@@ -17,6 +18,9 @@ public class SyncService {
     private PizzaApiService api;
     private PizzaDAO pizzaDAO;
     private Context context;
+
+    Random random = new Random();
+    String[] sizes = {"S", "M", "L", "XL"};
 
 
     public interface SyncCallback {
@@ -58,9 +62,9 @@ public class SyncService {
 
                         p.setDescription(desc);
 
-                        p.setPrice(0.0);
-                        p.setSize("M");
-                        p.setStock(0);
+                        p.setPrice(50000 + (500000 - 50000) * random.nextDouble());
+                        p.setSize(sizes[random.nextInt(sizes.length)]);
+                        p.setStock(random.nextInt(101));
 
                         pizzas.add(p);
 

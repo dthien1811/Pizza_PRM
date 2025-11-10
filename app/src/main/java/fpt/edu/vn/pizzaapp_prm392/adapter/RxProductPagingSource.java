@@ -24,13 +24,15 @@ public class RxProductPagingSource extends RxPagingSource<Integer, Pizza> {
     private final String query;
     private final Double minPrice, maxPrice;
     private final String category;
+    private final String sortOrder;
 
-    public RxProductPagingSource(PizzaDAO pizzaDAO, String query, Double minPrice, Double maxPrice, String category) {
+    public RxProductPagingSource(PizzaDAO pizzaDAO, String query, Double minPrice, Double maxPrice, String category, String sortOrder) {
         this.pizzaDAO = pizzaDAO;
         this.query = query == null ? "": query;
         this.minPrice = minPrice;
         this.maxPrice = maxPrice;
         this.category = category;
+        this.sortOrder = sortOrder != null ? sortOrder : "asc";
     }
 
 
@@ -44,7 +46,7 @@ public class RxProductPagingSource extends RxPagingSource<Integer, Pizza> {
                 int page = loadParams.getKey() != null ? loadParams.getKey() : 1;
                 int size = 20;
 
-                List<Pizza> cached = pizzaDAO.search(query, minPrice, maxPrice, category, page, size);
+                List<Pizza> cached = pizzaDAO.search(query, minPrice, maxPrice, category, sortOrder, page, size);
                 Integer prevKey = page > 1 ? page - 1 : null;
                 Integer nextKey = cached.size() == size ? page + 1 : null;
 
